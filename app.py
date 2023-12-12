@@ -1611,4 +1611,7 @@ st.text(
     "Some spend more, some less, some may spend very little, \n"\
     "some may spend a lot if they spend anything at all, and so on."
 )
-
+del transactions
+del mcc_codes
+del trans_types
+del gender_train
