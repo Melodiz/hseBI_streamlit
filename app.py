@@ -10,21 +10,48 @@ import plotly.graph_objects as go
 st.title("HSE BI PROJECT")
 st.header("Prepared by Novosad Ivan")
 
-#uploading all data
-PATH_DATA = './dataset'
-tr_1 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_1.csv'), index_col='client_id').sort_index()
-tr_2 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_2.csv'), index_col='client_id').sort_index()
-tr_3 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_3.csv'), index_col='client_id').sort_index()
-tr_4 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_4.csv'), index_col='client_id').sort_index()
-tr_5 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_5.csv'), index_col='client_id').sort_index()
-tr_6 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_6.csv'), index_col='client_id').sort_index()
-transactions = pd.concat(
-    [tr_1, tr_2, tr_3, tr_4, tr_5, tr_6]
-)
+@st.cache_data
+def load_data_transactions():
+    #uploading all data
+    PATH_DATA = './dataset'
+    tr_1 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_1.csv'), index_col='client_id').sort_index()
+    tr_2 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_2.csv'), index_col='client_id').sort_index()
+    tr_3 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_3.csv'), index_col='client_id').sort_index()
+    tr_4 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_4.csv'), index_col='client_id').sort_index()
+    tr_5 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_5.csv'), index_col='client_id').sort_index()
+    tr_6 = pd.read_csv(os.path.join(PATH_DATA, 'transaction_6.csv'), index_col='client_id').sort_index()
+    transactions = pd.concat(
+        [tr_1, tr_2, tr_3, tr_4, tr_5, tr_6]
+    )
 
-mcc_codes = pd.read_csv(os.path.join(PATH_DATA, 'mcc_codes.csv'), sep=';', index_col='mcc_code')
-gender_train = pd.read_csv(os.path.join(PATH_DATA, 'train.csv'), index_col='client_id')
-trans_types = pd.read_csv('dataset/trans_types.csv')
+    mcc_codes = pd.read_csv(os.path.join(PATH_DATA, 'mcc_codes.csv'), sep=';', index_col='mcc_code')
+    gender_train = pd.read_csv(os.path.join(PATH_DATA, 'train.csv'), index_col='client_id')
+    trans_types = pd.read_csv('dataset/trans_types.csv')
+    return  transactions
+
+
+@st.cache_data
+def load_data_mcc():
+    PATH_DATA = './dataset'
+    mcc_codes = pd.read_csv(os.path.join(PATH_DATA, 'mcc_codes.csv'), sep=';', index_col='mcc_code')
+    return mcc_codes
+
+@st.cache_data
+def load_data_gender():
+    PATH_DATA = './dataset'
+    gender_train = pd.read_csv(os.path.join(PATH_DATA, 'train.csv'), index_col='client_id')
+    return gender_train
+
+
+@st.cache_data
+def load_data_trans_types():
+    trans_types = pd.read_csv('dataset/trans_types.csv')
+    return trans_types
+
+transactions = load_data_transactions()
+gender_train = load_data_gender()
+mcc_codes = load_data_mcc()
+trans_types = load_data_trans_types()
 
 # main settings about the style: 
 main_template = 'plotly_dark'
@@ -170,6 +197,7 @@ st.subheader(
 # lets find how many women and men spend for given period:
 
 #slit men's and women's transactions
+
 women_spendings = extended_transactions.loc[(gender_train['gender'] == 0) & (extended_transactions['amount'] < 0)]
 men_spendings = extended_transactions.loc[(gender_train['gender'] == 1) & (extended_transactions['amount'] < 0)]
 
