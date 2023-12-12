@@ -99,8 +99,9 @@ st.dataframe(trans_types)
 
 st.subheader("Genders")
 st.plotly_chart(fig_genders_id_group)
+del fig_genders_id_group
 
-
+del genders_id_group
 
 # st.subheader('Time period covered')
 
@@ -145,6 +146,7 @@ st.plotly_chart(fig_genders_id_group)
 #                                  bargap = 0.04)
 
 # st.plotly_chart(fig_period_covered)
+# del fig_period_covered
 
 # fig_cor_period_covered = px.histogram(df_period_covered.loc[df_period_covered['count']>430],
 #                                 x = 'count', 
@@ -156,7 +158,7 @@ st.plotly_chart(fig_genders_id_group)
 #                                  bargap = 0.2)
 
 # st.plotly_chart(fig_cor_period_covered)
-
+# del fig_cor_period_covered
 # st.text("conclusion: \n"\
 #     "our data mainly contain informationon people's \n"\
 #     "spending over a period of 400-450 days")
@@ -225,6 +227,8 @@ gr_women_spendings_cor['gender'] = ['female']*len(gr_women_spendings_cor)
 avg_men_spendings = round(abs(gr_men_spendings['amount'].mean()), 2)
 avg_women_spendings = round(abs(gr_women_spendings['amount'].mean()), 2)
 
+del gr_women_spendings
+
 bar_c_of_avg_spendings = px.bar(
             x = [avg_men_spendings, avg_women_spendings],
             y = ['men', 'women'],
@@ -235,7 +239,11 @@ bar_c_of_avg_spendings = px.bar(
                      template=main_template,
                      )
 
+del avg_women_spendings
+del avg_men_spendings
+
 st.plotly_chart(bar_c_of_avg_spendings)
+del bar_c_of_avg_spendings
 
 fig_box_gr_men_spendigns = px.box(gr_men_spendings['amount'].abs(), 
              template=main_template, 
@@ -243,12 +251,19 @@ fig_box_gr_men_spendigns = px.box(gr_men_spendings['amount'].abs(),
              y = 'amount', 
              points='all')
 
-st.plotly_chart(fig_box_gr_men_spendigns)
+del gr_men_spendings
 
-fig_box_gr_men_spendigns_cor = px.box(gr_men_spendings_cor, y='amount', template=main_template, 
-             title = "Adjusted data about men's spendings over the period (less then 1.5 M rub)")
+st.plotly_chart(fig_box_gr_men_spendigns)
+del fig_box_gr_men_spendigns
+
+fig_box_gr_men_spendigns_cor = px.box(
+     gr_men_spendings_cor, 
+     y='amount', 
+     template=main_template, 
+    title = "Adjusted data about men's spendings over the period (less then 1.5 M rub)")
 
 st.plotly_chart(fig_box_gr_men_spendigns_cor)
+del fig_box_gr_men_spendigns_cor
 
 
 
@@ -260,16 +275,7 @@ st.header("Distribution charts")
 st.subheader("income distribution")
 st.text("the sum of all expenses for the whole period, for each user (row)")
 
-# normalize the spendings period to 30 days
-# mo_extended_transactions = extended_transactions.reset_index()
 
-def crutch_to_normalise_sorting(value: str):
-    return (len(value.split()[0])>2)*value
-
-mo_extended_transactions = extended_transactions
-mo_extended_transactions['trans_time'] = mo_extended_transactions['trans_time'].apply(crutch_to_normalise_sorting)
-mo_extended_transactions = mo_extended_transactions.sort_values(
-    by=['client_id', 'trans_time'], ascending=[False, False])
 
 gr_women_spendings_cor['gender'] = ['female']*len(gr_women_spendings_cor)
 
@@ -293,9 +299,14 @@ fig_women_spendings_bar = px.bar(
 						)
 
 st.plotly_chart(fig_men_spendings_bar)
+del fig_men_spendings_bar
 st.plotly_chart(fig_women_spendings_bar)
+del fig_women_spendings_bar
 
 merge_spendings_cor = pd.concat([gr_men_spendings_cor, gr_women_spendings_cor])
+
+del gr_women_spendings_cor
+del gr_men_spendings_cor
 
 fig_spendings_merge = px.line(merge_spendings_cor, 
 							  color='gender', 
@@ -308,9 +319,9 @@ fig_spendings_merge = px.line(merge_spendings_cor,
 				 					'amount':'spends in rubles',
 									'count':'amount of people'
 										})
-
+del merge_spendings_cor
 st.plotly_chart(fig_spendings_merge)
-
+del fig_spendings_merge
 
 st.subheader("time distribution")
 st.text(
@@ -335,14 +346,13 @@ def cor_amount(amount):
 partical_men_sp_data['trans_time'] = (partical_men_sp_data['trans_time'].apply(sep_time_and_data))
 # partical_men_sp_data['mcc_code'] = partical_men_sp_data['mcc_code'].apply(mcc_value_s)
 partical_men_sp_data['amount'] = partical_men_sp_data['amount'].apply(cor_amount)
-cut_partical_men_sp_data = partical_men_sp_data.head(100_000)
+
 partical_men_sp_data = partical_men_sp_data.sort_values('trans_time')
 
 
 partical_women_sp_data['trans_time'] = partical_women_sp_data['trans_time'].apply(sep_time_and_data)
 # partical_women_sp_data['mcc_code'] = partical_women_sp_data['mcc_code'].apply(mcc_value_s)
 partical_women_sp_data['amount'] = partical_women_sp_data['amount'].apply(cor_amount)
-cut_partical_women_sp_data = partical_women_sp_data.head(100_000)
 partical_women_sp_data = partical_women_sp_data.sort_values('trans_time')
 
 time_spendings_men = px.histogram(partical_men_sp_data, x = 'trans_time', y = 'amount',
@@ -353,6 +363,7 @@ time_spendings_men = px.histogram(partical_men_sp_data, x = 'trans_time', y = 'a
 time_spendings_men.update_layout(yaxis_title = 'sum of transaction on eeach hour')
 
 st.plotly_chart(time_spendings_men)
+del time_spendings_men
 
 time_spendings_women = px.histogram(partical_women_sp_data, x = 'trans_time', y = 'amount',
                                     template=main_template,
@@ -362,6 +373,7 @@ time_spendings_women = px.histogram(partical_women_sp_data, x = 'trans_time', y 
 time_spendings_women.update_layout(yaxis_title = 'sum of transaction on eeach hour')
 
 st.plotly_chart(time_spendings_women)
+del time_spendings_women
 
 # show how much operation they perform on each hour
 plank = st.slider('Choose plank', 0, 100_000, 10_000)
@@ -371,9 +383,11 @@ def amount_transofrm(value):
 
 
 count_trans_men = partical_men_sp_data.copy()
+del partical_men_sp_data
 count_trans_men['amount'] = count_trans_men['amount'].apply(amount_transofrm)
 
 count_trans_women = partical_women_sp_data.copy()
+del partical_women_sp_data
 count_trans_women['amount'] = count_trans_women['amount'].apply(amount_transofrm)
 
 fig_count_trans_per_hounr_men = px.histogram(
@@ -384,9 +398,13 @@ fig_count_trans_per_hounr_men = px.histogram(
             template=main_template,
             color_discrete_sequence=px.colors.qualitative.Set1, 
             labels={'trans_time':'transactions time'})
+
+del count_trans_men
+
 fig_count_trans_per_hounr_men.update_layout(yaxis_title="how many operations men perform in an hour")
 
 st.plotly_chart(fig_count_trans_per_hounr_men)
+del fig_count_trans_per_hounr_men
 
 fig_count_trans_per_hounr_women = px.histogram(
             count_trans_women, 
@@ -396,9 +414,12 @@ fig_count_trans_per_hounr_women = px.histogram(
             template=main_template,
             color_discrete_sequence=px.colors.qualitative.Set3, 
             labels={'trans_time':'transactions time'})
+del count_trans_women
+
 fig_count_trans_per_hounr_women.update_layout(yaxis_title="how many operations men perform in an hour")
 
 st.plotly_chart(fig_count_trans_per_hounr_women)
+del fig_count_trans_per_hounr_women
 
 
 st.subheader("Categorization")
@@ -410,11 +431,16 @@ categories_number = st.slider('select the number of categories', 0, 50, 10)
 mean_mcc_men = men_spendings.groupby('mcc_code')['amount'].sum().reset_index().set_index('mcc_code')
 mean_mcc_women = women_spendings.groupby('mcc_code')['amount'].sum().reset_index().set_index('mcc_code')
 
+del women_spendings
+del men_spendings
+
 mcc_means = mcc_codes.to_dict('index')
 # get statistics on the 15 most popular expenses of men and women
 top10_men_sum = abs(mean_mcc_men.sort_values('amount').head(categories_number)).reset_index()
 top10_women_sum = abs(mean_mcc_women.sort_values('amount').head(categories_number)).reset_index()
 
+del mean_mcc_men
+del mean_mcc_women
 # visualise it:
 
 top10_men_mcc_names = [mcc_means[x]['mcc_description'] for x in top10_men_sum['mcc_code'].tolist()]
@@ -425,11 +451,14 @@ fig_top10_men = px.bar(top10_men_sum, y = 'amount', x = [x for x in range(catego
             template=main_template, 
             color=top10_men_mcc_names)
 
+del top10_men_mcc_names
+
 fig_top10_men.update_layout(legend_orientation="h",    
     legend_y=-0.25,
     legend_x = -0.1)
 
 st.plotly_chart(fig_top10_men)
+del fig_top10_men
 
 top10_women_mcc_names = [mcc_means[x]['mcc_description'] for x in top10_women_sum['mcc_code'].tolist()]
 
@@ -439,11 +468,14 @@ fig_top10_women = px.bar(top10_women_sum, y = 'amount', x = [x for x in range(ca
             template=main_template, 
             color=top10_women_mcc_names)
 
+del top10_women_mcc_names
+
 fig_top10_women.update_layout(legend_orientation="h",    
     legend_y=-0.25,
     legend_x = -0.1)
 
 st.plotly_chart(fig_top10_women)
+del fig_top10_women
 
 st.subheader("City distribution")
 
@@ -466,19 +498,25 @@ fig_distr_city_men = px.box(city_distr_men, x = 'trans_city', y = 'amount',
              template=main_template, 
              title = 'distribution of spending by city among men (relevant part)', 
              labels={'amount':'spending data', 'trans_city':'city name'})
+del city_distr_men
+
 fig_distr_city_men.update_layout( 
     yaxis=dict(
         range=[0,2*10**6]))
 
 st.plotly_chart(fig_distr_city_men)
+del fig_distr_city_men
 fig_distr_city_women = px.box(city_distr_women, x = 'trans_city', y = 'amount', 
              template=main_template, 
              title = 'distribution of spending by city among women (relevant part)', 
              labels={'amount':'spending data', 'trans_city':'city name'})
+del city_distr_women
+
 fig_distr_city_women.update_layout( 
     yaxis=dict(
         range=[0,2*10**6]))
 st.plotly_chart(fig_distr_city_women)
+del fig_distr_city_women
 
 
 st.text(
@@ -516,7 +554,10 @@ fig_penza_overview_income_spend = px.bar(
     title = 'Scale of the anomaly', 
     labels= {'x':'', 'y': 'amount in rubles'}
 )
+del penzas_median
+
 st.plotly_chart(fig_penza_overview_income_spend)
+del fig_penza_overview_income_spend
 st.text("Just in case: all transactions of this user are registered in Penza.")
 st.text("Let's see for what period and in what amount transactions were made")
 
@@ -526,6 +567,9 @@ def month_determ(data: str) -> int:
 penza_data_month_spend = penza_anomaly_spend.copy()
 penza_data_month_spend['trans_time'] = penza_data_month_spend['trans_time'].apply(month_determ)
 penza_data_month_spend_gr = penza_data_month_spend.groupby('trans_time')['amount'].sum().reset_index()
+
+del penza_data_month_spend
+
 penza_data_month_spend_gr['amount'] = penza_data_month_spend_gr['amount'].abs()
 penza_data_month_spend_gr['type'] = 'expenses'
 
@@ -535,6 +579,8 @@ penza_data_month_income_gr = penza_data_month_income.groupby('trans_time')['amou
 penza_data_month_income_gr['type'] = 'income'
 
 gr_penza_month = pd.concat([penza_data_month_income_gr, penza_data_month_spend_gr])
+del penza_data_month_spend_gr
+del penza_data_month_income_gr
 
 gr_penza_month = gr_penza_month.sort_values('trans_time')
 fig_penza_bar_month = px.bar(
@@ -547,8 +593,10 @@ fig_penza_bar_month = px.bar(
     title = 'Duration of the anomaly observation',
     labels={'trans_time': 'observed month'}
 )
+del gr_penza_month
 
 st.plotly_chart(fig_penza_bar_month)
+del fig_penza_bar_month
 
 st.text(
      "Hmmm, maybe most of the transactions were completely on any one day?\n"\
@@ -558,6 +606,8 @@ st.text(
 )
 
 ext_penza = penza_anomaly_data.copy()
+del penza_anomaly_data
+
 ext_penza = ext_penza.reset_index().drop(columns=['client_id'])
 ext_penza['type'] = np.where(ext_penza['amount'] > 0, 'income', 'expenses')
 ext_penza['amount'] = ext_penza['amount'].abs()
@@ -581,6 +631,8 @@ four_month_penza_income['type'] = 'income'
 
 four_month_penza = pd.concat([four_month_penza_sped, 
                               four_month_penza_income])
+del four_month_penza_sped
+del four_month_penza_income
 
 def four_month_clear_days(data: str) -> int:
     return data-180
@@ -597,8 +649,10 @@ fig_penza_hist_days = px.bar(
     title = "Distribution of expenditure and income by days of the fourth month", 
     labels={'trans_time':'day'}
 )
+del four_month_penza
 
 st.plotly_chart(fig_penza_hist_days)
+del fig_penza_hist_days
 st.text(
      "Conclusion: no, it wasn't one big transaction on \n"\
     "any given day, the distribution is roughly uniform"
@@ -629,6 +683,7 @@ fig_top3_penza_spend = px.bar(
         )
 
 st.plotly_chart(fig_top3_penza_spend)
+del fig_top3_penza_spend
 
 fig_top3_penza_income = px.bar(
     ext_penza.loc[ext_penza['type'] == 'income'].groupby(
@@ -640,7 +695,9 @@ fig_top3_penza_income = px.bar(
         title = 'Spending categories'
         )
 
+del ext_penza
 st.plotly_chart(fig_top3_penza_income)
+del fig_top3_penza_income
 
 st.text(
      "So, we won't get anything interesting out of the categories, \n"\
@@ -662,7 +719,9 @@ fig_penza_term = px.bar(penza_term,
              labels={'term_id':'terminal id'}, 
              title = 'What terminals she used to withdraw money from')
 
+del penza_term
 st.plotly_chart(fig_penza_term)
+del fig_penza_term
 
 st.text(
      "Conclusion: \n"\
@@ -701,6 +760,8 @@ penza_anomaly_income = penza_anomaly_income.groupby('trans_time')['amount'].sum(
 penza_anomaly_income['type'] = 'income'
 
 penza_times = pd.concat([penza_anomaly_income, penza_anomaly_spend])
+del penza_anomaly_spend
+del penza_anomaly_income
 
 fig_penza_times = px.bar(
     penza_times, 
@@ -712,10 +773,12 @@ fig_penza_times = px.bar(
     labels={'trans_time':'hour'}, 
     template=main_template
 )
+del penza_times
 
 fig_penza_times.update_xaxes(minor=dict(ticklen=6, tickcolor="white"))
 
 st.plotly_chart(fig_penza_times)
+del fig_penza_times
 
 st.text(
      "No, nothing noteworthy. \n"\
@@ -739,7 +802,7 @@ st.text(
 restaurant_codes = [5812,5813,5814]
 restaurant_data = extended_transactions.loc[
     extended_transactions['mcc_code'].isin(restaurant_codes)]
-
+del restaurant_codes
 def sep_time_and_data(trans_time):
     return (trans_time[-8:-6])
 
@@ -757,7 +820,8 @@ rest_man_temp['gender']='male'
 
 count_rest_data = pd.concat([rest_woman_temp, 
                                 rest_man_temp])
-
+del rest_woman_temp
+del rest_man_temp
 
 fig_bar_rest_time_sum = px.bar(count_rest_data, 
              y='amount', x = 'trans_time', 
@@ -768,6 +832,7 @@ fig_bar_rest_time_sum = px.bar(count_rest_data,
              title = 'Amount spent on restaurants by men and women by hour (sum, barmode=relative)')
 
 st.plotly_chart(fig_bar_rest_time_sum)
+del fig_bar_rest_time_sum
 
 st.text(
     "find out what is the ratio between transfers \n"\
@@ -785,8 +850,10 @@ fig_terms_trans_pie = px.pie(
     )
 fig_terms_trans_pie.update_traces(hoverinfo='label+percent', textinfo='value', textfont_size=15,
                   marker=dict(line=dict(color='#ffffff', width=0.5)))
+del nan_terms
 
 st.plotly_chart(fig_terms_trans_pie)
+del fig_terms_trans_pie
 
 def check_terminal_present(term_id: str) -> str:
     if len(str(term_id))!=3:
@@ -806,6 +873,9 @@ restaurant_data_women['gender'] = 'female'
 
 
 restaurant_data_4_lines = pd.concat([restaurant_data_men, restaurant_data_women])
+del restaurant_data_women
+del restaurant_data_men
+
 fig = px.bar(
     restaurant_data_4_lines, 
     x = 'gender', 
@@ -816,8 +886,10 @@ fig = px.bar(
     labels={'term_id':'type'},
     title='Who and how to make payments.' 
 )
+del restaurant_data_4_lines
 
 st.plotly_chart(fig)
+del fig
 
 fig_box_city_rest = px.box(
     restaurant_data, 
@@ -831,11 +903,14 @@ fig_box_city_rest = px.box(
     title = 'Spending on restaurants in different Russian cities (1-male, 0-female)' 
 
 )
+del restaurant_data
+
 fig_box_city_rest.update_layout( 
     yaxis=dict(
         range=[0,1000]))
 
 st.plotly_chart(fig_box_city_rest)
+del fig_box_city_rest
 
 
 
@@ -856,6 +931,7 @@ st.text(
 codes_car = [5532,5533,5541,5542,7523,7531,7538]
 
 car_owners = extended_transactions.loc[extended_transactions['mcc_code'].isin(codes_car)]
+del codes_car
 car_owners = set(car_owners.index.values.tolist())
 tr_cars = extended_transactions.loc[extended_transactions.index.isin(car_owners)]
 
@@ -873,8 +949,10 @@ fig_car_genders_pie = px.pie(
     title = 'Gender distribution among car owners',
     hole=0.6
 )
-
+del car_genders
 st.plotly_chart(fig_car_genders_pie)
+del fig_car_genders_pie
+
 st.text("Let's look at the ratio of male to female motorists")
 
 st.text(
@@ -888,14 +966,21 @@ st.text(
 
 no_cars_income = extended_transactions.loc[
     (extended_transactions.index.isin(car_owners)==False) & (extended_transactions['amount']>0)]
+del car_owners
+
 no_cars_gr_inc = no_cars_income.groupby(level=0)['amount'].sum().reset_index()
+del no_cars_income
 no_cars_gr_inc['car'] = 'carless'
 
+
 cars_income = tr_cars.loc[tr_cars['amount']>0]
+del tr_cars
 cars_gr_inc = cars_income.groupby(level=0)['amount'].sum().reset_index()
+del cars_income
 cars_gr_inc['car'] = 'have car'
 
 merge_cars_inc = pd.concat([cars_gr_inc,no_cars_gr_inc]).set_index('client_id')
+del no_cars_gr_inc
 
 fig_car_income_box = px.box(
     merge_cars_inc, 
@@ -906,10 +991,12 @@ fig_car_income_box = px.box(
     template=main_template, 
     labels={'car':'type'}
 )
+del merge_cars_inc
 
 fig_car_income_box.update_layout(yaxis=dict(range=[0,1.5*10**6]))
 
 st.plotly_chart(fig_car_income_box)
+del fig_car_income_box
 
 st.text(
      "Thus we can see a noticeable correlation between earnings and having a car"
@@ -938,6 +1025,7 @@ codes_medicine = [5912,8071,8099,8062,8011,5122]
 medicine_spendings = extended_transactions.loc[
     (extended_transactions['mcc_code'].isin(codes_medicine)) &
     (extended_transactions['amount']<0)]
+del codes_medicine
 
 # remove time data and group them by week for clarity. Believe me, a 450-day chart is overnoisy
 def keep_only_weeks_int(trans_time: str) -> int:
@@ -977,8 +1065,10 @@ fig_medicine_line = px.line(
     title='Spending on medicine in 450 days',
     labels={'trans_time':'week number'}
 )   
+del medicine_spendings_gr
 
 st.plotly_chart(fig_medicine_line)
+del fig_medicine_line
 
 st.text("Hmm, total spending across all medical categories looks uninformative, \n"\
     "let's break this graph down into a few")
@@ -995,6 +1085,7 @@ fig_medicine_scatter = px.scatter(
 )
 
 st.plotly_chart(fig_medicine_scatter)
+del fig_medicine_scatter
 
 #preparing dataframe for ulta_mega_super_combined_line_graph
 
@@ -1014,6 +1105,8 @@ fig_medicine_line_pro = px.line(
     labels={'trans_time':'week number', 
             'mcc_code':'category:'},
 )
+del medicine_mcc_gr
+
 fig_medicine_line_pro.update_layout(
     legend_orientation='h')
 fig_medicine_line_pro.update_layout(
@@ -1025,6 +1118,7 @@ fig_medicine_line_pro.update_layout(
 )
 
 st.plotly_chart(fig_medicine_line_pro)
+del fig_medicine_line_pro
 
 
 st.text(
@@ -1040,6 +1134,7 @@ users_total_spend = extended_transactions.loc[extended_transactions['amount']<0]
 med_users_total_spent = medicine_spendings.reset_index().groupby(
     ['client_id', 'gender', 'mcc_code']
 )['amount'].sum().reset_index().set_index('client_id').sort_index()
+del medicine_spendings
 
 med_income_spend_correl = pd.merge(
     med_users_total_spent,
@@ -1052,6 +1147,7 @@ med_income_spend_correl = pd.merge(
         'amount_x':'spent',
         'amount_y':'income'
         })
+del med_users_total_spent
 
 # rename genders: from 0-1 to mele-female
 med_income_spend_correl['gender'] = np.where(
@@ -1073,6 +1169,7 @@ fig_med_income_scatter = px.scatter(
 )
 
 st.plotly_chart(fig_med_income_scatter)
+del fig_med_income_scatter
 
 st.text(
      "The correlation is weak due to the high density near the origin. \n"\
@@ -1121,8 +1218,10 @@ fig_medicine_income_bar_pro.add_trace(
         name = 'category sum'
     )
 )
+del med_income_spend_correl
 
 st.plotly_chart(fig_medicine_income_bar_pro)
+del fig_medicine_income_bar_pro
 st.text(
     "Yes, there is a correlation between a person's income and their spending on medicine. \n"\
     "The more a person earns, the more likely they spend on medicine. \n"\
@@ -1141,6 +1240,9 @@ codes_trevel = [3000,3351,3501,4112,4411,4511,4722,7011,7512,7991]
 trev_transactions = extended_transactions.loc[
     extended_transactions['mcc_code'].isin(codes_trevel)
 ]
+del extended_transactions
+del codes_trevel
+
 trev_transactions = trev_transactions.loc[
     trev_transactions['amount']<0
 ]
@@ -1201,6 +1303,7 @@ fig_trevel_days_distr_bar.update_layout(
 )
 
 st.plotly_chart(fig_trevel_days_distr_bar)
+del fig_trevel_days_distr_bar
 
 st.text(
      "We should group categories of expenses, \n"\
@@ -1266,6 +1369,7 @@ fig_adv_trevel_days_distr_bar.update_layout(
     legend_x = -0.1
 )
 st.plotly_chart(fig_adv_trevel_days_distr_bar)
+del fig_adv_trevel_days_distr_bar
 st.text(
      "Let's now construct a linear graph and increase the step: \n"\
     "now we will group by 2 weeks."
@@ -1290,6 +1394,8 @@ fig_adv_trevel_days_distr_line = px.line(
     template=main_template,
     line_shape='spline'
 )
+del trev_transactions_gr
+del trev_transactions_gr_two
 
 fig_adv_trevel_days_distr_line.update_layout(
     legend_orientation='h', 
@@ -1299,6 +1405,7 @@ fig_adv_trevel_days_distr_line.update_layout(
 )
 
 st.plotly_chart(fig_adv_trevel_days_distr_line)
+del fig_adv_trevel_days_distr_line
 
 st.text(
      "Conclusion: \n"\
@@ -1327,6 +1434,9 @@ trev_income_spend_correl = pd.merge(
         'amount_y':'income'
         })
 
+del users_total_spend
+del trev_users_total_spent
+
 # rename genders: from 0-1 to mele-female
 trev_income_spend_correl['gender'] = np.where(
     trev_income_spend_correl['gender'], 'male', 'female')
@@ -1349,6 +1459,7 @@ fig_trev_income_scatter = px.scatter(
     
 )
 st.plotly_chart(fig_trev_income_scatter)
+del fig_trev_income_scatter
 
 
 st.text(
@@ -1393,8 +1504,10 @@ fig_trevel_income_bar_pro.add_trace(
         line_shape = 'spline'
     )
 )
+del trev_income_spend_correl
 
 st.plotly_chart(fig_trevel_income_bar_pro)
+del fig_trevel_income_bar_pro
 
 st.text(
      "Conclusion: there are no a correlation between income and travel expenses."
@@ -1409,6 +1522,7 @@ trev_city = trev_transactions.groupby(['trans_time', 'trans_city'])['amount'].su
 
 #make smother var
 trev_city_smooth = trev_city.copy()
+del trev_city
 trev_city_smooth = trev_city_smooth.copy()
 trev_city_smooth['trans_time'] = trev_city_smooth['trans_time'].apply(one_to_two_week)
 trev_city_smooth = trev_city_smooth.groupby(['trans_time', 'trans_city'])['amount'].sum().reset_index()
@@ -1431,6 +1545,7 @@ fig_trev_city_week_bar.update_layout(
 )
 
 st.plotly_chart(fig_trev_city_week_bar)
+del fig_trev_city_week_bar
 
 st.text(
      "Conclusion: \n"\
@@ -1453,6 +1568,7 @@ fig_trev_city_week_line = px.line(
     labels={'trans_time': 'week_number'}, 
     template=main_template,
 )
+del trev_city_smooth
 
 fig_trev_city_week_line.update_layout(
     legend_orientation='h', 
@@ -1462,6 +1578,7 @@ fig_trev_city_week_line.update_layout(
 )
 
 st.plotly_chart(fig_trev_city_week_line)
+del fig_trev_city_week_line
 
 st.text(
      "Conclusion: \n"\
@@ -1479,6 +1596,8 @@ fig_trev_city_box = px.box(
     labels={'trans_city':'city name'},
     template=main_template
 )
+del trev_transactions
+
 fig_trev_city_box.update_layout( 
     yaxis=dict(
         range=[0,20_000]
@@ -1486,6 +1605,7 @@ fig_trev_city_box.update_layout(
 )
 
 st.plotly_chart(fig_trev_city_box)
+del fig_trev_city_box
 st.text(
     "Conclusion: residents of different cities spend different amounts of money on travel. \n"\
     "Some spend more, some less, some may spend very little, \n"\
