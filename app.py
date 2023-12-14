@@ -87,108 +87,128 @@ def change_bool_to_names(gender_value:int) -> str:
 
 # combine them into one dataframe with 2 columns
 # client_id & gender 
-genders_id_group = pd.DataFrame(transactions.index.copy()).set_index('client_id')
-genders_id_group = genders_id_group.join(gender_train)
-genders_id_group = genders_id_group.loc[:, ~genders_id_group.columns.str.contains('^Unnamed')]
-genders_id_group = genders_id_group[~genders_id_group.index.duplicated(keep='first')]
+@st.cache_data
+def build_client_id_gender():
+    genders_id_group = pd.DataFrame(transactions.index.copy()).set_index('client_id')
+    genders_id_group = genders_id_group.join(gender_train)
+    genders_id_group = genders_id_group.loc[:, ~genders_id_group.columns.str.contains('^Unnamed')]
+    genders_id_group = genders_id_group[~genders_id_group.index.duplicated(keep='first')]
 
 
-genders_id_group = genders_id_group.reset_index().groupby('gender')['client_id'].count().reset_index()
-genders_id_group['gender'][0] = 'female'
-genders_id_group['gender'][1] = 'male'
+    genders_id_group = genders_id_group.reset_index().groupby('gender')['client_id'].count().reset_index()
+    genders_id_group['gender'][0] = 'female'
+    genders_id_group['gender'][1] = 'male'
 
-#make simple bar chart using this data
+    #make simple bar chart using this data
 
-fig_genders_id_group = px.bar(genders_id_group,
-    x = 'gender',
-    y = 'client_id', 
-    template=main_template, 
-    labels={'client_id': 'quantity'}, 
-    title='how many men and women in dataset', 
-    color='gender'
-)
+    fig_genders_id_group = px.bar(genders_id_group,
+        x = 'gender',
+        y = 'client_id', 
+        template=main_template, 
+        labels={'client_id': 'quantity'}, 
+        title='how many men and women in dataset', 
+        color='gender'
+    )
+    st.subheader("Genders")
+    st.plotly_chart(fig_genders_id_group)
+    del fig_genders_id_group
+    del genders_id_group
+    return
 
+build_client_id_gender()
 
-extended_transactions = pd.merge(transactions, gender_train, left_index=True, right_index=True)
-extended_transactions = extended_transactions.sort_index()
+@st.cache_data
+def build_extended_transactions():
+    extended_transactions = pd.merge(transactions, gender_train, left_index=True, right_index=True)
+    extended_transactions = extended_transactions.sort_index()
+    return extended_transactions
 
-st.header("Data overview")
-st.subheader("row form")
-
-st.text("transactions & genders(first 100 rows, of 3'563'529)")
-st.dataframe(extended_transactions.head(100))
-
-st.text('mcc codes')
-st.dataframe(mcc_codes)
-
-st.text('transaction types')
-st.dataframe(trans_types)
-
-st.subheader("Genders")
-st.plotly_chart(fig_genders_id_group)
-del fig_genders_id_group
-
-del genders_id_group
-
-# st.subheader('Time period covered')
-
-# st.text(
-#     "transaction time data is recorded in the form \n"\
-#     "of how manydays have passed since the countdown date, \n"\
-#     "but the time is local time"
-# )
-# # it takes about minute, on m2
-# def exclude_trans_time_ext(n):
-#     return (n>0)*(n)
-
-# period_covered_sl = {}
-
-# prev_index = transactions.index[0]
-# temp_max = -1
-# temp_min = 10**5
-# for index, row in transactions.sort_index().iterrows():
-#     data = int(row['trans_time'].split()[0])
-#     if index == prev_index:
-#         temp_max = max(temp_max, data)
-#         temp_min = min(temp_min, data)
-#     else:
-#         period_covered_sl[index]=temp_max-temp_min
-#         prev_index = index
-#         temp_min = 10**5
-#         temp_max = -1
+extended_transactions = build_extended_transactions()
 
 
-# df_period_covered = pd.DataFrame(list(period_covered_sl.items()), columns=['client_id', 'count'])
-# df_period_covered['count'] = df_period_covered['count'].apply(exclude_trans_time_ext)
+@st.cache_data
+def build_show_row_dataframe():
+
+    st.header("Data overview")
+    st.subheader("row form")
+
+    st.text("transactions & genders(first 100 rows, of 3'563'529)")
+    st.dataframe(extended_transactions.head(100))
+
+    st.text('mcc codes')
+    st.dataframe(mcc_codes)
+
+    st.text('transaction types')
+    st.dataframe(trans_types)
+    return
+
+build_show_row_dataframe()
+
+def exclude_trans_time_ext(n):
+    return (n>0)*(n)
+
+@st.cache_data
+def build_time_period_covered():
+    #it takes about a minute on m2 macbook
+    st.subheader('Time period covered')
+
+    st.text(
+        "transaction time data is recorded in the form \n"\
+        "of how manydays have passed since the countdown date, \n"\
+        "but the time is local time"
+    )
+
+    period_covered_sl = {}
+
+    prev_index = transactions.index[0]
+    temp_max = -1
+    temp_min = 10**5
+    for index, row in transactions.sort_index().iterrows():
+        data = int(row['trans_time'].split()[0])
+        if index == prev_index:
+            temp_max = max(temp_max, data)
+            temp_min = min(temp_min, data)
+        else:
+            period_covered_sl[index]=temp_max-temp_min
+            prev_index = index
+            temp_min = 10**5
+            temp_max = -1
+
+
+    df_period_covered = pd.DataFrame(list(period_covered_sl.items()), columns=['client_id', 'count'])
+    df_period_covered['count'] = df_period_covered['count'].apply(exclude_trans_time_ext)
 
 
 
-# fig_period_covered = px.histogram(df_period_covered,
-#                                 x = 'count', 
-#                                 template=main_template, 
-#                                 title = 'Spending rate')
-# fig_period_covered.update_layout(xaxis_title = 'period of spendings in days', 
-#                                  yaxis_title = 'users count', 
-#                                  title_x = 0.45,
-#                                  bargap = 0.04)
+    fig_period_covered = px.histogram(df_period_covered,
+                                    x = 'count', 
+                                    template=main_template, 
+                                    title = 'Spending rate')
+    fig_period_covered.update_layout(xaxis_title = 'period of spendings in days', 
+                                    yaxis_title = 'users count', 
+                                    title_x = 0.45,
+                                    bargap = 0.04)
 
-# st.plotly_chart(fig_period_covered)
-# del fig_period_covered
+    st.plotly_chart(fig_period_covered)
+    del fig_period_covered
 
-# fig_cor_period_covered = px.histogram(df_period_covered.loc[df_period_covered['count']>430],
-#                                 x = 'count', 
-#                                 template=main_template, 
-#                                 title = 'Adjustment Spending rate')
-# fig_cor_period_covered.update_layout(xaxis_title = 'period of spendings in days', 
-#                                  yaxis_title = 'users count', 
-#                                  title_x = 0.45,
-#                                  bargap = 0.2)
+    fig_cor_period_covered = px.histogram(df_period_covered.loc[df_period_covered['count']>430],
+                                    x = 'count', 
+                                    template=main_template, 
+                                    title = 'Adjustment Spending rate')
+    fig_cor_period_covered.update_layout(xaxis_title = 'period of spendings in days', 
+                                    yaxis_title = 'users count', 
+                                    title_x = 0.45,
+                                    bargap = 0.2)
 
-# st.plotly_chart(fig_cor_period_covered)
-# del fig_cor_period_covered
-# st.text("conclusion: \n"\
-#     "our data mainly contain informationon people's \n"\
-#     "spending over a period of 400-450 days")
+    st.plotly_chart(fig_cor_period_covered)
+    del fig_cor_period_covered
+    st.text("conclusion: \n"\
+        "our data mainly contain informationon people's \n"\
+        "spending over a period of 400-450 days")
+    return 
+
+build_time_period_covered()
 
 
 st.subheader(
@@ -197,19 +217,24 @@ st.subheader(
 # lets find how many women and men spend for given period:
 
 #slit men's and women's transactions
+@st.cache_data
+def build_genders_spendings():
+    women_spendings = extended_transactions.loc[(gender_train['gender'] == 0) & (extended_transactions['amount'] < 0)]
+    men_spendings = extended_transactions.loc[(gender_train['gender'] == 1) & (extended_transactions['amount'] < 0)]
+    return (women_spendings,men_spendings)
 
-women_spendings = extended_transactions.loc[(gender_train['gender'] == 0) & (extended_transactions['amount'] < 0)]
-men_spendings = extended_transactions.loc[(gender_train['gender'] == 1) & (extended_transactions['amount'] < 0)]
+women_spendings, men_spendings = build_genders_spendings()
 
-#group all spends of each users
-gr_women_spendings = women_spendings.groupby(level=0)['amount'].sum().reset_index().set_index('client_id')
-gr_men_spendings = men_spendings.groupby(level=0)['amount'].sum().reset_index().set_index('client_id')
+@st.cache_data
+def build_gr_gender_spendings():
+
+    gr_women_spendings = women_spendings.groupby(level=0)['amount'].sum().reset_index().set_index('client_id')
+    gr_men_spendings = men_spendings.groupby(level=0)['amount'].sum().reset_index().set_index('client_id')
+    return (gr_women_spendings, gr_men_spendings)
+
+gr_women_spendings, gr_men_spendings = build_gr_gender_spendings()
 
 # histogram about their spendings
-n = 60
-array_of_closest = [x*(1_500_000/n) for x in range(n)]
-
-#Python Code to Find closest number in Sorted array using recursion
 def find_closest_recursive(arr, left, right, target):
 	# base case: when there is only one element in the array
 	if left == right:
@@ -229,79 +254,95 @@ def find_closest_recursive(arr, left, right, target):
 		return left_closest
 	else:
 		return right_closest
+     
 
+@st.cache_data
+def build_avg_spendings(gr_men_spendings, gr_women_spendings):
+    avg_men_spendings = round(abs(gr_men_spendings['amount'].mean()), 2)
+    avg_women_spendings = round(abs(gr_women_spendings['amount'].mean()), 2)
 
-gr_men_spendings_cor = gr_men_spendings.reset_index()['amount'].abs().tolist()
-gr_men_spendings_cor = [find_closest_recursive(array_of_closest, 0, n-1, x) for x in gr_men_spendings_cor]
-
-gr_men_spendings_cor = list(Counter(gr_men_spendings_cor).items())
-gr_men_spendings_cor = pd.DataFrame(gr_men_spendings_cor).rename(columns={0:'amount', 1:'count'})
-
-gr_men_spendings_cor = gr_men_spendings_cor.sort_values('amount')
-gr_men_spendings_cor = gr_men_spendings_cor.head(len(gr_men_spendings_cor)-1)
-gr_men_spendings_cor['gender'] = ['male']*len(gr_men_spendings_cor)
-
-# same for women
-gr_women_spendings_cor = gr_women_spendings.reset_index()['amount'].abs().tolist()
-gr_women_spendings_cor = [find_closest_recursive(array_of_closest, 0, n-1, x) for x in gr_women_spendings_cor]
-
-gr_women_spendings_cor = list(Counter(gr_women_spendings_cor).items())
-gr_women_spendings_cor = pd.DataFrame(gr_women_spendings_cor).rename(columns={0:'amount', 1:'count'})
-
-gr_women_spendings_cor = gr_women_spendings_cor.sort_values('amount')
-gr_women_spendings_cor = gr_women_spendings_cor.head(len(gr_women_spendings_cor)-1)
-gr_women_spendings_cor['gender'] = ['female']*len(gr_women_spendings_cor)
-
-avg_men_spendings = round(abs(gr_men_spendings['amount'].mean()), 2)
-avg_women_spendings = round(abs(gr_women_spendings['amount'].mean()), 2)
-
-del gr_women_spendings
-
-bar_c_of_avg_spendings = px.bar(
+    bar_c_of_avg_spendings = px.bar(
             x = [avg_men_spendings, avg_women_spendings],
             y = ['men', 'women'],
             orientation='h',
             title = "AVG men's and women's spendings: (sum over a period)", 
             labels={ "x": "quantity in millions of rubles",
-                     "y": "sex"},
-                     template=main_template,
-                     )
+                    "y": "sex"},
+                    template=main_template,)
+    
+    del avg_women_spendings
+    del avg_men_spendings
 
-del avg_women_spendings
-del avg_men_spendings
+    st.plotly_chart(bar_c_of_avg_spendings)
+    del bar_c_of_avg_spendings
 
-st.plotly_chart(bar_c_of_avg_spendings)
-del bar_c_of_avg_spendings
+    del gr_women_spendings
 
-fig_box_gr_men_spendigns = px.box(gr_men_spendings['amount'].abs(), 
-             template=main_template, 
-             title = "Box plot, men's spendings", 
-             y = 'amount', 
-             points='all')
+    return
 
-del gr_men_spendings
-
-st.plotly_chart(fig_box_gr_men_spendigns)
-del fig_box_gr_men_spendigns
-
-fig_box_gr_men_spendigns_cor = px.box(
-     gr_men_spendings_cor, 
-     y='amount', 
-     template=main_template, 
-    title = "Adjusted data about men's spendings over the period (less then 1.5 M rub)")
-
-st.plotly_chart(fig_box_gr_men_spendigns_cor)
-del fig_box_gr_men_spendigns_cor
+build_avg_spendings(
+    gr_men_spendings = gr_men_spendings,
+    gr_women_spendings = gr_women_spendings
+)
 
 
 
 
+@st.cache_data
+def build_bar_income_distr(gr_men_spendings):
+    fig_box_gr_men_spendigns = px.box(gr_men_spendings['amount'].abs(), 
+                template=main_template, 
+                title = "Box plot, men's spendings", 
+                y = 'amount', 
+                points='all')
 
+    del gr_men_spendings
+
+    st.plotly_chart(fig_box_gr_men_spendigns)
+    del fig_box_gr_men_spendigns
+
+    return 
+
+build_bar_income_distr(gr_men_spendings=gr_men_spendings)
+
+
+@st.cache_data
+def build_bar_hist_income_distr(n,gr_men_spendings, gr_women_spendings ):
+    array_of_closest = [x*(1_500_000/n) for x in range(n)]
+    gr_men_spendings_cor = gr_men_spendings.reset_index()['amount'].abs().tolist()
+    gr_men_spendings_cor = [find_closest_recursive(array_of_closest, 0, n-1, x) for x in gr_men_spendings_cor]
+
+    gr_men_spendings_cor = list(Counter(gr_men_spendings_cor).items())
+    gr_men_spendings_cor = pd.DataFrame(gr_men_spendings_cor).rename(columns={0:'amount', 1:'count'})
+
+    gr_men_spendings_cor = gr_men_spendings_cor.sort_values('amount')
+    gr_men_spendings_cor = gr_men_spendings_cor.head(len(gr_men_spendings_cor)-1)
+    gr_men_spendings_cor['gender'] = ['male']*len(gr_men_spendings_cor)
+
+    # same for women
+    gr_women_spendings_cor = gr_women_spendings.reset_index()['amount'].abs().tolist()
+    gr_women_spendings_cor = [find_closest_recursive(array_of_closest, 0, n-1, x) for x in gr_women_spendings_cor]
+
+    gr_women_spendings_cor = list(Counter(gr_women_spendings_cor).items())
+    gr_women_spendings_cor = pd.DataFrame(gr_women_spendings_cor).rename(columns={0:'amount', 1:'count'})
+
+    gr_women_spendings_cor = gr_women_spendings_cor.sort_values('amount')
+    gr_women_spendings_cor = gr_women_spendings_cor.head(len(gr_women_spendings_cor)-1)
+    gr_women_spendings_cor['gender'] = ['female']*len(gr_women_spendings_cor)
+    return gr_men_spendings_cor,gr_women_spendings_cor
 
 st.title("Details")
 st.header("Distribution charts")
 st.subheader("income distribution")
 st.text("the sum of all expenses for the whole period, for each user (row)")
+
+n = st.slider('choose the step', 2, 400, 60)
+
+gr_men_spendings_cor,gr_women_spendings_cor = build_bar_hist_income_distr(
+    n,
+    gr_men_spendings=gr_men_spendings, 
+    gr_women_spendings=gr_women_spendings
+)
 
 
 
